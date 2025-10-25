@@ -1,16 +1,83 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Server Value</title>
-	<script>
-		async function load() {
-			const res = await fetch("https://api.tournies.net/server");
-			const data = await res.json();
-			document.body.innerText = data.amount1;
-		}
-		window.onload = load;
-	</script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tournies API Test</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.5}
+    .card{border:1px solid #ddd;border-radius:12px;padding:16px;margin:12px 0}
+    input,button{font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid #ccc}
+    button{cursor:pointer}
+    pre{background:#f7f7f7;border-radius:10px;padding:12px;overflow:auto}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .row input{flex:1}
+    .ok{color:#127c36}.err{color:#b00020}
+  </style>
 </head>
-<body></body>
+<body>
+  <h1>GitHub Pages ↔️ Tournies API</h1>
+
+  <div class="card">
+    <strong>Server counter</strong>
+    <div id="serverStatus">Loading…</div>
+    <pre id="serverJson" hidden></pre>
+  </div>
+
+  <div class="card">
+    <strong>Player lookup</strong>
+    <div class="row" style="margin-top:8px">
+      <input id="name" placeholder="Player name (e.g., Notch)" />
+      <button id="btn">Lookup</button>
+    </div>
+    <pre id="playerJson" hidden></pre>
+    <div id="playerMsg"></div>
+  </div>
+
+  <script>
+    const API = "https://api.tournies.net";
+
+    function pretty(text){
+      try { return JSON.stringify(JSON.parse(text), null, 2); }
+      catch { return text; }
+    }
+
+    async function loadServer(){
+      const status = document.getElementById("serverStatus");
+      const out = document.getElementById("serverJson");
+      try{
+        const r = await fetch(`${API}/server`);
+        const t = await r.text();
+        out.textContent = pretty(t);
+        out.hidden = false;
+        status.innerHTML = r.ok ? `<span class="ok">OK</span> (HTTP ${r.status})`
+                                : `<span class="err">Error</span> (HTTP ${r.status})`;
+      }catch{
+        status.innerHTML = `<span class="err">Network error</span>`;
+      }
+    }
+
+    async function lookup(){
+      const name = document.getElementById("name").value.trim();
+      const msg = document.getElementById("playerMsg");
+      const out = document.getElementById("playerJson");
+      if(!name){ msg.textContent = "Enter a player name."; out.hidden = true; return; }
+      msg.textContent = "Loading…";
+      try{
+        const r = await fetch(`${API}/info/${encodeURIComponent(name)}`);
+        const t = await r.text();
+        out.textContent = pretty(t);
+        out.hidden = false;
+        msg.innerHTML = r.ok ? `<span class="ok">OK</span> (HTTP ${r.status})`
+                             : `<span class="err">Error</span> (HTTP ${r.status})`;
+      }catch{
+        msg.innerHTML = `<span class="err">Network error</span>`;
+        out.hidden = true;
+      }
+    }
+
+    document.getElementById("btn").addEventListener("click", lookup);
+    loadServer();
+  </script>
+</body>
 </html>
